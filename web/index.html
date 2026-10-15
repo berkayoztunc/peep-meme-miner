@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peep meme miner Setup</title>
+<link rel="stylesheet" href="vendor/tailwind.css">
+<link rel="icon" type="image/png" href="assets/logo.png">
+</head>
+<body class="min-h-full">
+
+<!-- ================= header ================= -->
+<header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+  <div class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+    <div class="flex items-center gap-2.5">
+      <img src="assets/logo.png" alt="Peep meme miner" class="h-9 w-9 rounded-lg ring-1 ring-slate-700">
+      <div class="leading-tight">
+        <div class="text-sm font-semibold text-white">Peep meme miner</div>
+        <div class="text-[11px] text-slate-500">M5StickC Plus2 trader</div>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <span id="connChip" class="chip border-slate-700 text-slate-400">
+        <span id="connDot" class="h-1.5 w-1.5 rounded-full bg-slate-500"></span><span id="connText">Not connected</span>
+      </span>
+      <button id="btnConnect" class="btn-primary">Connect stick</button>
+    </div>
+  </div>
+  <nav id="tabs" class="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-3" role="tablist">
+    <button class="tab" role="tab" data-t="install" aria-selected="true">Install</button>
+    <button class="tab" role="tab" data-t="device" aria-selected="false">Device</button>
+    <button class="tab" role="tab" data-t="wallet" aria-selected="false">Wallet</button>
+    <button class="tab" role="tab" data-t="trading" aria-selected="false">Trading</button>
+    <button class="tab" role="tab" data-t="network" aria-selected="false">Network</button>
+    <button class="tab" role="tab" data-t="help" aria-selected="false">Help</button>
+  </nav>
+</header>
+
+<main class="mx-auto max-w-5xl px-4 pb-32 pt-6">
+
+  <!-- browser support banner -->
+  <div id="unsupported" class="mb-5 hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+    <b>Web Serial is not available.</b> Open this page in desktop <b>Chrome</b> or <b>Edge</b>, from <code class="font-mono">http://localhost</code> (run <code class="font-mono">tools/serve.sh</code>).
+  </div>
+
+  <!-- ============ INSTALL ============ -->
+  <section id="p-install" data-panel>
+    <div class="grid gap-5 lg:grid-cols-5">
+      <div class="card lg:col-span-3">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h1 class="text-xl font-semibold text-white">Install firmware</h1>
+            <p class="mt-1 text-sm text-slate-400">Flash Peep meme miner onto your M5StickC Plus2 straight from the browser. About 1 minute.</p>
+          </div>
+          <span id="fwver" class="chip border-slate-700 text-slate-400 whitespace-nowrap">v?</span>
+        </div>
+
+        <ol class="mt-6 space-y-4">
+          <li class="flex gap-3">
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-semibold text-pump-400">1</span>
+            <div class="text-sm"><div class="font-medium text-slate-100">Plug in the stick</div><div class="text-slate-400">Use a USB <b>data</b> cable. Close the Arduino / PlatformIO serial monitor if open.</div></div>
+          </li>
+          <li class="flex gap-3">
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-semibold text-pump-400">2</span>
+            <div class="text-sm"><div class="font-medium text-slate-100">Click install and pick the port</div><div class="text-slate-400">Choose the <i>USB serial</i> / CH9102 entry. Tick <b>Erase device</b> on a first install.</div></div>
+          </li>
+          <li class="flex gap-3">
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-semibold text-pump-400">3</span>
+            <div class="text-sm"><div class="font-medium text-slate-100">Wait for the stick to reboot</div><div class="text-slate-400">The screen shows <span class="font-mono text-slate-300">SETUP NEEDED</span>. Then connect it with the button top right.</div></div>
+          </li>
+        </ol>
+
+        <div class="mt-7 flex flex-wrap items-center gap-3">
+          <esp-web-install-button id="ewt" manifest="manifest.json">
+            <button slot="activate" class="btn-primary px-5 py-2.5">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+              Install Peep meme miner
+            </button>
+            <span slot="unsupported" class="text-sm text-amber-300">Browser not supported. Use desktop Chrome or Edge.</span>
+            <span slot="not-allowed" class="text-sm text-amber-300">Open from http://localhost or https.</span>
+          </esp-web-install-button>
+          <button id="goDevice" class="btn-ghost">Already installed? Go to setup</button>
+        </div>
+      </div>
+
+      <div class="space-y-5 lg:col-span-2">
+        <!-- stick preview -->
+        <div class="card flex items-center justify-center bg-gradient-to-b from-slate-900 to-slate-950">
+          <div class="relative h-56 w-28 rounded-[1.6rem] border border-slate-700 bg-gradient-to-b from-slate-800 to-slate-900 p-2.5 shadow-xl shadow-black/40">
+            <div class="h-24 w-full rounded-lg bg-black p-1.5 ring-1 ring-slate-700">
+              <div class="flex h-full flex-col justify-between rounded bg-slate-950 px-1.5 py-1 font-mono text-[7px] leading-tight text-slate-300">
+                <div class="flex justify-between rounded-sm bg-pump-500 px-1 text-slate-950"><span>PEEP MINER</span><span>3/12</span></div>
+                <div class="flex items-center justify-between gap-1">
+                  <div class="space-y-0.5"><div class="text-[9px] font-bold text-white">WIF2</div><div class="text-emerald-400">1h +42%</div><div>MC $331k</div></div>
+                  <img src="assets/logo.png" alt="" class="h-7 w-7 rounded">
+                </div>
+                <div class="text-slate-500">A:Buy B:Next</div>
+              </div>
+            </div>
+            <div class="mx-auto mt-3 h-9 w-9 rounded-full border border-slate-600 bg-gradient-to-b from-slate-700 to-slate-800"></div>
+            <div class="absolute -right-1 top-24 h-8 w-1.5 rounded-r bg-slate-600"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Requirements</h3>
+          <ul class="mt-3 space-y-2 text-sm">
+            <li class="flex items-center gap-2"><span id="reqBrowser" class="h-2 w-2 rounded-full bg-slate-600"></span><span class="text-slate-300">Chrome / Edge with Web Serial</span></li>
+            <li class="flex items-center gap-2"><span id="reqSecure" class="h-2 w-2 rounded-full bg-slate-600"></span><span class="text-slate-300">Served from localhost / https</span></li>
+            <li class="flex items-center gap-2"><span id="reqFw" class="h-2 w-2 rounded-full bg-slate-600"></span><span class="text-slate-300">Firmware image found</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <details class="card mt-5">
+      <summary class="flex items-center justify-between text-sm font-semibold text-slate-100">
+        Port not listed or install fails?
+        <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-slate-400">
+        <li>Install the WCH <b>CH34x / CH9102</b> driver (macOS/Windows), then re-plug.</li>
+        <li>Try another cable: many are charge-only.</li>
+        <li>Hold the side button <b>B</b> while plugging in to force download mode.</li>
+        <li>Only one program can use the port. Close other tabs and serial monitors.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- ============ gate shown on device tabs ============ -->
+  <div id="gate" class="mb-5 hidden rounded-xl border border-slate-700 bg-slate-900/70 p-5 text-center">
+    <div class="text-sm font-medium text-white">Connect your stick to continue</div>
+    <p class="mx-auto mt-1 max-w-md text-sm text-slate-400">Plug it in over USB and press <b>Connect stick</b>. Settings are read from and saved to the device.</p>
+    <button id="gateConnect" class="btn-primary mt-4">Connect stick</button>
+  </div>
+
+  <div id="deviceArea">
+  <!-- ============ DEVICE ============ -->
+  <section id="p-device" data-panel class="hidden">
+    <h1 class="text-xl font-semibold text-white">Device</h1>
+    <p class="mt-1 text-sm text-slate-400">Live status of your stick.</p>
+
+    <div id="setupCard" class="card mt-5 hidden !border-amber-500/40 !bg-amber-500/5">
+      <div class="flex items-start gap-3">
+        <svg viewBox="0 0 24 24" class="mt-0.5 h-5 w-5 shrink-0 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <div class="min-w-0 flex-1">
+          <h3 class="card-title text-amber-200">Setup incomplete: the stick shows "SETUP NEEDED"</h3>
+          <ul id="setupList" class="mt-3 space-y-2 text-sm"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div class="card !p-4"><div class="label !mb-1">Firmware</div><div id="stFw" class="font-mono text-sm text-white">-</div></div>
+      <div class="card !p-4"><div class="label !mb-1">Wi-Fi</div><div id="stWifi" class="text-sm text-white">-</div></div>
+      <div class="card !p-4"><div class="label !mb-1">Battery</div><div id="stBat" class="text-sm text-white">-</div></div>
+      <div class="card !p-4"><div class="label !mb-1">Mode</div><div id="stMode" class="text-sm text-white">-</div></div>
+    </div>
+
+    <div class="mt-5 grid gap-5 md:grid-cols-2">
+      <div class="card">
+        <h3 class="card-title">Wallet</h3>
+        <p id="stPub" class="mt-2 break-all font-mono text-xs text-slate-300">-</p>
+        <p class="hint">Balance: <span id="stBal" class="text-slate-300">-</span></p>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Open position</h3>
+        <p id="stPos" class="mt-2 text-sm text-slate-300">-</p>
+        <p class="hint">Free heap: <span id="stHeap">-</span></p>
+      </div>
+    </div>
+
+    <div class="card mt-5">
+      <h3 class="card-title">Actions</h3>
+      <div class="mt-3 flex flex-wrap gap-3">
+        <button id="btnReload" class="btn-ghost">Re-read from stick</button>
+        <button id="btnReboot" class="btn-ghost">Reboot stick</button>
+        <button id="btnWipe" class="btn-danger">Factory reset</button>
+      </div>
+      <p class="hint">Factory reset erases wallet, settings and position. Press <b>A</b> on the stick to confirm.</p>
+    </div>
+  </section>
+
+  <!-- ============ WALLET ============ -->
+  <section id="p-wallet" data-panel class="hidden">
+    <h1 class="text-xl font-semibold text-white">Wallet</h1>
+    <p class="mt-1 text-sm text-slate-400">The key lives on the stick and signs trades on-device.</p>
+
+    <div class="mt-4 flex gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+      <svg viewBox="0 0 24 24" class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <div>Use a <b>burner wallet</b> with a small balance. The key is stored unencrypted in the stick's flash and could be extracted by anyone holding the device.</div>
+    </div>
+
+    <div class="mt-5 grid gap-5 md:grid-cols-5">
+      <div class="card md:col-span-3">
+        <h3 class="card-title">Trading address</h3>
+        <div class="mt-3 flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+          <span id="pub" class="min-w-0 flex-1 break-all font-mono text-xs text-slate-200" data-v="">No wallet yet</span>
+          <button id="btnCopy" class="btn-ghost !px-3 !py-1.5 text-xs" disabled>Copy</button>
+        </div>
+        <div class="mt-4 flex items-end justify-between">
+          <div>
+            <div class="label !mb-0.5">SOL balance</div>
+            <div id="bal" class="text-2xl font-semibold text-white">-</div>
+          </div>
+          <button id="btnBal" class="btn-ghost !py-1.5 text-xs" disabled>Refresh</button>
+        </div>
+        <p class="hint">Send a little SOL to this address from your main wallet to fund the stick.</p>
+      </div>
+
+      <div class="card md:col-span-2">
+        <h3 class="card-title">Generate on stick</h3>
+        <p class="card-sub">Recommended. The secret never leaves the device.</p>
+        <button id="btnGen" class="btn-primary mt-4 w-full" disabled>Generate new key</button>
+        <p class="hint">If a wallet exists, press A on the stick to replace it.</p>
+      </div>
+    </div>
+
+    <details class="card mt-5">
+      <summary class="flex items-center justify-between text-sm font-semibold text-slate-100">
+        Import an existing key
+        <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <label class="label mt-4">Base58 secret key, or JSON array of 64 numbers</label>
+      <textarea id="secret" rows="3" class="input font-mono text-xs" autocomplete="off" spellcheck="false" placeholder="paste here. Sent straight to the stick over USB."></textarea>
+      <button id="btnImport" class="btn-danger mt-3" disabled>Import to stick</button>
+    </details>
+  </section>
+
+  <!-- ============ TRADING ============ -->
+  <section id="p-trading" data-panel class="hidden">
+    <h1 class="text-xl font-semibold text-white">Trading</h1>
+    <p class="mt-1 text-sm text-slate-400">How much, how fast, and when to get out.</p>
+
+    <!-- armed -->
+    <div id="armedCard" class="card mt-5 flex items-center justify-between gap-4 !border-slate-700">
+      <div>
+        <div class="flex items-center gap-2">
+          <h3 class="card-title">Armed</h3>
+          <span id="armedChip" class="chip border-slate-700 text-slate-400">Simulate only</span>
+        </div>
+        <p class="card-sub">Off: every trade is only simulated. On: real transactions are sent.</p>
+      </div>
+      <button id="armed" type="button" role="switch" aria-checked="false"
+        class="relative h-7 w-12 shrink-0 rounded-full bg-slate-700 transition aria-checked:bg-rose-500">
+        <span class="absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white transition-transform" id="armedKnob"></span>
+      </button>
+    </div>
+
+    <div class="mt-5 grid gap-5 md:grid-cols-2">
+      <div class="card">
+        <h3 class="card-title">Position size</h3>
+        <label class="label mt-4" for="buy_sol">Buy size (SOL)</label>
+        <input id="buy_sol" type="number" step="0.001" min="0.0005" class="input" data-field>
+        <div class="mt-2 flex gap-2" id="buyChips">
+          <button type="button" data-v="0.01" class="chip border-slate-700 text-slate-300 hover:bg-slate-800">0.01</button>
+          <button type="button" data-v="0.05" class="chip border-slate-700 text-slate-300 hover:bg-slate-800">0.05</button>
+          <button type="button" data-v="0.1" class="chip border-slate-700 text-slate-300 hover:bg-slate-800">0.1</button>
+          <button type="button" data-v="0.25" class="chip border-slate-700 text-slate-300 hover:bg-slate-800">0.25</button>
+        </div>
+        <label class="label mt-4" for="max_sol">Hard cap per trade (SOL)</label>
+        <input id="max_sol" type="number" step="0.001" min="0.0005" class="input" data-field>
+        <p class="hint">Buy size is never allowed above this.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Execution</h3>
+        <div class="mt-4 flex items-center justify-between">
+          <label class="label !mb-0" for="slip">Slippage tolerance</label>
+          <span id="slipVal" class="font-mono text-xs text-slate-200">15%</span>
+        </div>
+        <input id="slip" type="range" min="1" max="40" step="1" class="mt-2" data-field>
+        <div class="label mt-5">Priority fee</div>
+        <div class="seg" id="prioSeg">
+          <button type="button" data-v="10000">Low</button>
+          <button type="button" data-v="100000">Normal</button>
+          <button type="button" data-v="500000">High</button>
+          <button type="button" data-v="2000000">Max</button>
+        </div>
+        <p class="hint"><span id="prioVal">100000</span> micro-lamports per compute unit.</p>
+        <label class="label mt-4" for="cu">Compute unit limit</label>
+        <input id="cu" type="number" step="10000" min="50000" class="input" data-field>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Auto exit</h3>
+        <p class="card-sub">Only while armed and the stick is on the position screen.</p>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div>
+            <label class="label" for="tp">Take profit %</label>
+            <input id="tp" type="number" min="0" class="input" placeholder="0 = off" data-field>
+          </div>
+          <div>
+            <label class="label" for="sl">Stop loss %</label>
+            <input id="sl" type="number" min="0" class="input" placeholder="0 = off" data-field>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Token list</h3>
+        <p class="card-sub">pump.fun tokens from the Jupiter token API. Shows each token's image.</p>
+        <div class="label mt-4">Sort by</div>
+        <div class="seg flex-wrap" id="sortSeg">
+          <button type="button" data-v="0">Radar</button>
+          <button type="button" data-v="1">Thesis</button>
+          <button type="button" data-v="2">Call</button>
+          <button type="button" data-v="3">All signals</button>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+        </div>
+      </div>
+
+      <div class="card md:col-span-2">
+        <h3 class="card-title">Miner mode</h3>
+        <p class="card-sub">Pick <b>Miner</b> in the stick menu: it checks for the newest radar signal and buys it automatically with real SOL (ignores Armed). A mint is never bought twice. Sells at stop loss, hold target or timeout, whichever comes first. These also edit on the stick under Settings.</p>
+        <div class="mt-4 grid gap-5 md:grid-cols-2">
+          <div>
+            <label class="label" for="miner_buy">Buy per signal (SOL, capped by Max per trade)</label>
+            <input id="miner_buy" type="number" step="0.01" min="0.01" class="input" data-field>
+          </div>
+          <div>
+            <label class="label" for="miner_to">Sell after (minutes)</label>
+            <input id="miner_to" type="number" min="1" max="60" class="input" data-field>
+          </div>
+          <div>
+            <div class="label">Hold target (sell at)</div>
+            <div class="seg" id="mxSeg">
+              <button type="button" data-v="2">2x</button>
+              <button type="button" data-v="3">3x</button>
+              <button type="button" data-v="4">4x</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Stop loss</div>
+            <div class="seg" id="mslSeg">
+              <button type="button" data-v="20">-20%</button>
+              <button type="button" data-v="30">-30%</button>
+              <button type="button" data-v="50">-50%</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Check interval</div>
+            <div class="seg" id="mivSeg">
+              <button type="button" data-v="10">10 sec</button>
+              <button type="button" data-v="30">30 sec</button>
+              <button type="button" data-v="60">1 min</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card md:col-span-2">
+        <h3 class="card-title">Stick behaviour</h3>
+        <div class="mt-4 grid gap-5 md:grid-cols-2">
+          <div>
+            <div class="flex items-center justify-between"><label class="label !mb-0" for="bright">Screen brightness</label><span id="brightVal" class="font-mono text-xs text-slate-200">60%</span></div>
+            <input id="bright" type="range" min="5" max="100" step="5" class="mt-2" data-field>
+          </div>
+          <div>
+            <label class="label" for="idle">Sleep after idle (minutes, 0 = never)</label>
+            <input id="idle" type="number" min="0" class="input" data-field>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NETWORK ============ -->
+  <section id="p-network" data-panel class="hidden">
+    <h1 class="text-xl font-semibold text-white">Network</h1>
+    <p class="mt-1 text-sm text-slate-400">Wi-Fi and data providers. Secrets are write-only.</p>
+
+    <div class="card mt-5">
+      <h3 class="card-title">Wi-Fi networks</h3>
+      <p class="card-sub">Up to three, tried in order. 2.4 GHz only.</p>
+      <div class="mt-4 space-y-4" id="wifiRows"></div>
+    </div>
+
+    <div class="card mt-5">
+      <h3 class="card-title">Providers</h3>
+      <label class="label mt-4" for="rpc">Solana RPC URL</label>
+      <input id="rpc" class="input font-mono text-xs" placeholder="https://api.mainnet-beta.solana.com" data-field>
+      <p class="hint">The public RPC is rate limited. A Helius or QuickNode URL is much more reliable.</p>
+      <label class="label mt-4" for="peep">Peep signals API key</label>
+      <div class="relative">
+        <input id="peep" type="password" class="input pr-16 font-mono text-xs" autocomplete="off" data-field>
+        <button type="button" id="eyePeep" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white">show</button>
+      </div>
+      <p class="hint" id="peepHint">Required: this is the only token source. Sent as a Bearer token to the Peep partner API.</p>
+      <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-400">
+        Orquestra (transaction building) needs no key. Token data comes only from the Peep API.
+      </div>
+    </div>
+  </section>
+  </div><!-- /deviceArea -->
+
+  <!-- ============ HELP ============ -->
+  <section id="p-help" data-panel class="hidden">
+    <h1 class="text-xl font-semibold text-white">Help</h1>
+    <div class="mt-5 grid gap-5 md:grid-cols-2">
+      <div class="card">
+        <h3 class="card-title">Buttons</h3>
+        <table class="mt-3 w-full text-left text-sm">
+          <thead class="text-xs text-slate-500"><tr><th class="pb-2 font-medium">Screen</th><th class="pb-2 font-medium">A (front)</th><th class="pb-2 font-medium">B (side)</th></tr></thead>
+          <tbody class="divide-y divide-slate-800 text-slate-300">
+            <tr><td class="py-2">Token card</td><td>Buy</td><td>Next token</td></tr>
+            <tr><td class="py-2">Power (short)</td><td colspan="2">previous token. Hold B = refresh</td></tr>
+            <tr><td class="py-2">Buy confirm</td><td>Confirm</td><td>Cancel</td></tr>
+            <tr><td class="py-2">Position</td><td>Sell</td><td class="text-slate-500">locked until sold</td></tr>
+            <tr><td class="py-2">Power (hold)</td><td colspan="2">power off</td></tr>
+          </tbody>
+        </table>
+        <p class="hint">Each token is shown as a card: symbol, 1h change, market cap, volume, trades, holders and curve progress, with the logo on the right.</p>
+      </div>
+      <div class="card">
+        <h3 class="card-title">First trade checklist</h3>
+        <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-slate-300">
+          <li>Install firmware, connect, set Wi-Fi.</li>
+          <li>Generate a wallet and send ~0.05 SOL to it.</li>
+          <li>Leave <b>Armed</b> off. Press A, A: should show SIM OK.</li>
+          <li>Arm, buy the minimum size, then sell. The position screen stays up (even after a reboot) until the token is sold.</li>
+        </ol>
+      </div>
+      <div class="card md:col-span-2">
+        <h3 class="card-title">Risks</h3>
+        <p class="mt-2 text-sm text-slate-400">Memecoins can go to zero or be impossible to sell. Slippage, fees and failed transactions cost money. This is experimental software with no warranty.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= save bar ================= -->
+<div id="saveBar" class="pointer-events-none fixed inset-x-0 bottom-0 z-40 translate-y-full px-4 pb-4 transition-transform duration-200">
+  <div class="pointer-events-auto mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl border border-slate-700 bg-slate-900/95 p-3 pl-5 shadow-2xl shadow-black/50 backdrop-blur">
+    <span class="text-sm text-slate-300">You have unsaved changes</span>
+    <div class="flex gap-2">
+      <button id="btnDiscard" class="btn-ghost !py-1.5">Discard</button>
+      <button id="btnSave" class="btn-primary !py-1.5">Save to stick</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= toasts + log ================= -->
+<div id="toasts" class="pointer-events-none fixed right-4 top-20 z-50 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2"></div>
+<button id="logToggle" class="fixed bottom-3 left-3 z-30 rounded-md border border-slate-800 bg-slate-900/80 px-2 py-1 font-mono text-[10px] text-slate-500 hover:text-slate-300">log</button>
+<pre id="log" class="fixed bottom-10 left-3 z-30 hidden max-h-48 w-96 max-w-[calc(100vw-1.5rem)] overflow-auto rounded-lg border border-slate-800 bg-slate-950/95 p-3 font-mono text-[11px] text-slate-400"></pre>
+
+<script type="module" src="vendor/esp-web-tools/install-button.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+  // ---------- toasts / log ----------
+  const TOAST_STYLE = { ok: 'border-emerald-500/40 text-emerald-200', err: 'border-rose-500/40 text-rose-200', info: 'border-slate-700 text-slate-200' };
+  function toast(msg, kind = 'info') {
+    const t = document.createElement('div');
+    t.className = 'pointer-events-auto animate-pop rounded-xl border bg-slate-900/95 px-4 py-3 text-sm shadow-xl shadow-black/40 ' + TOAST_STYLE[kind];
+    t.textContent = msg;
+    $('toasts').appendChild(t);
+    setTimeout(() => t.remove(), kind === 'err' ? 6000 : 3200);
+  }
+  const log = m => { const l = $('log'); l.textContent += new Date().toLocaleTimeString() + '  ' + m + '\n'; l.scrollTop = l.scrollHeight; };
+  $('logToggle').onclick = () => $('log').classList.toggle('hidden');
+
+  // ---------- tabs ----------
+  const DEVICE_TABS = ['device', 'wallet', 'trading', 'network'];
+  let tab = 'install';
+  function showTab(t) {
+    tab = t;
+    $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.t === t)));
+    $$('[data-panel]').forEach(p => p.classList.toggle('hidden', p.id !== 'p-' + t));
+    const needs = DEVICE_TABS.includes(t);
+    $('deviceArea').classList.toggle('hidden', !(needs));
+    $('gate').classList.toggle('hidden', !(needs && !connected));
+    $('deviceArea').classList.toggle('opacity-40', needs && !connected);
+    $('deviceArea').classList.toggle('pointer-events-none', needs && !connected);
+    try { location.hash = t; } catch (_) {}
+  }
+  $$('#tabs .tab').forEach(b => b.onclick = () => showTab(b.dataset.t));
+  $('goDevice').onclick = () => showTab('device');
+
+  // ---------- environment checks ----------
+  const hasSerial = 'serial' in navigator;
+  const dot = (id, ok) => { $(id).className = 'h-2 w-2 rounded-full ' + (ok ? 'bg-emerald-400' : 'bg-rose-500'); };
+  dot('reqBrowser', hasSerial);
+  dot('reqSecure', window.isSecureContext);
+  if (!hasSerial) { $('unsupported').classList.remove('hidden'); $('btnConnect').disabled = true; $('gateConnect').disabled = true; }
+  fetch('manifest.json').then(r => r.json()).then(m => { $('fwver').textContent = 'v' + m.version; dot('reqFw', true); })
+    .catch(() => { $('fwver').textContent = 'no image'; dot('reqFw', false); });
+
+  // ---------- serial client ----------
+  let port = null, writer = null, reader = null, buf = '', nextId = 1, connected = false, busy = false;
+  const pending = new Map();
+
+  async function readLoop() {
+    const dec = new TextDecoder();
+    try {
+      while (port && port.readable) {
+        reader = port.readable.getReader();
+        try {
+          for (;;) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            let i;
+            while ((i = buf.indexOf('\n')) >= 0) {
+              const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+              if (line[0] !== '{') continue;
+              try {
+                const m = JSON.parse(line);
+                // match by id; if a reply carries none, answer the oldest request
+                const key = (m.id !== undefined && pending.has(String(m.id))) ? String(m.id) : (m.id === undefined ? pending.keys().next().value : undefined);
+                const p = key !== undefined ? pending.get(key) : undefined;
+                if (p) { pending.delete(key); clearTimeout(p.t); m.ok ? p.res(m) : p.rej(new Error(m.error || 'error')); }
+              } catch (_) {}
+            }
+          }
+        } finally { reader.releaseLock(); }
+      }
+    } catch (e) { log('serial: ' + e.message); }
+    if (port) cleanup();
+  }
+
+  function send(cmd, extra = {}, timeout = 8000) {
+    return new Promise(async (res, rej) => {
+      if (!writer) return rej(new Error('not connected'));
+      const id = String(nextId++);
+      const t = setTimeout(() => { pending.delete(id); rej(new Error('timeout (' + cmd + ')')); }, timeout);
+      pending.set(id, { res, rej, t });
+      try { await writer.write(new TextEncoder().encode(JSON.stringify({ cmd, id, ...extra }) + '\n')); }
+      catch (e) { clearTimeout(t); pending.delete(id); rej(e); }
+    });
+  }
+
+  function setConn(state) { // 'off' | 'connecting' | 'on'
+    connected = state === 'on';
+    const map = {
+      off: ['Not connected', 'bg-slate-500', 'border-slate-700 text-slate-400'],
+      connecting: ['Connecting...', 'bg-amber-400 animate-pulse', 'border-amber-500/40 text-amber-300'],
+      on: ['Connected', 'bg-emerald-400', 'border-emerald-500/40 text-emerald-300'],
+    }[state];
+    $('connText').textContent = map[0];
+    $('connDot').className = 'h-1.5 w-1.5 rounded-full ' + map[1];
+    $('connChip').className = 'chip ' + map[2];
+    $('btnConnect').textContent = state === 'on' ? 'Disconnect' : 'Connect stick';
+    $('btnConnect').className = state === 'on' ? 'btn-ghost' : 'btn-primary';
+    $('btnConnect').disabled = state === 'connecting' || !hasSerial;
+    ['btnCopy', 'btnBal', 'btnGen', 'btnImport'].forEach(i => { $(i).disabled = state !== 'on'; });
+    showTab(tab);
+  }
+
+  async function cleanup() {
+    stopPolling();
+    try { if (reader) await reader.cancel(); } catch (_) {}
+    try { if (writer) writer.releaseLock(); } catch (_) {}
+    try { if (port) await port.close(); } catch (_) {}
+    reader = null; writer = null; port = null; buf = '';
+    pending.forEach(p => { clearTimeout(p.t); p.rej(new Error('disconnected')); });
+    pending.clear();
+    setConn('off');
+  }
+
+  // Opening the port resets the stick; it may still be booting. Retry hello.
+  async function waitForDevice() {
+    for (let i = 0; i < 20; i++) {
+      try { return await send('hello', {}, 1500); } catch (_) { log('waiting for stick (' + (i + 1) + '/20)'); }
+    }
+    throw new Error('Stick did not answer. Is Peep meme miner installed? See the Install tab.');
+  }
+
+  async function connect() {
+    try {
+      port = await navigator.serial.requestPort();
+    } catch (_) { port = null; return; } // user cancelled the picker
+    setConn('connecting');
+    try {
+      await port.open({ baudRate: 115200 });
+      writer = port.writable.getWriter();
+      readLoop();
+      await waitForDevice();
+      setConn('on');
+      await loadAll();
+      startPolling();
+      toast('Stick connected', 'ok');
+      if (tab === 'install') showTab('device');
+    } catch (e) {
+      toast(e.message, 'err'); log('connect: ' + e.message);
+      await cleanup();
+    }
+  }
+  const toggleConnect = () => (port ? cleanup() : connect());
+  $('btnConnect').onclick = toggleConnect;
+  $('gateConnect').onclick = toggleConnect;
+
+  // ---------- form <-> config ----------
+  let loaded = null;        // last config from stick
+  let pubkey = '';
+  const FIELDS = ['buy_sol', 'max_sol', 'tp', 'sl', 'bright', 'idle', 'cu', 'rpc', 'peep'];
+
+  // wifi rows
+  for (let i = 0; i < 3; i++) {
+    $('wifiRows').insertAdjacentHTML('beforeend', `
+      <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+        <div class="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">Network ${i + 1}${i === 0 ? ' (primary)' : ''}</div>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div><label class="label" for="ssid${i}">Name (SSID)</label><input id="ssid${i}" class="input" autocomplete="off" data-field></div>
+          <div><label class="label" for="pass${i}">Password</label><input id="pass${i}" type="password" class="input" autocomplete="new-password" placeholder="unchanged" data-field></div>
+        </div>
+      </div>`);
+  }
+
+  let armed = false, sortV = '0', prioV = '100000', mxV = '2', mslV = '50', mivV = '30';
+  function paintSeg(id, val) { $$('#' + id + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(val)))); }
+  function paintArmed() {
+    $('armed').setAttribute('aria-checked', String(armed));
+    $('armedKnob').style.transform = armed ? 'translateX(1.25rem)' : 'translateX(0)';
+    $('armedChip').textContent = armed ? 'LIVE: real transactions' : 'Simulate only';
+    $('armedChip').className = 'chip ' + (armed ? 'border-rose-500/40 text-rose-300' : 'border-slate-700 text-slate-400');
+    $('armedCard').className = 'card mt-5 flex items-center justify-between gap-4 ' + (armed ? '!border-rose-500/50' : '!border-slate-700');
+  }
+  function paintRanges() {
+    $('slipVal').textContent = $('slip').value + '%';
+    $('brightVal').textContent = $('bright').value + '%';
+    $('prioVal').textContent = prioV;
+  }
+
+  function fill(c) {
+    (c.wifi || []).forEach((w, i) => {
+      $('ssid' + i).value = w.ssid || '';
+      $('pass' + i).value = '';
+      $('pass' + i).placeholder = w.pass_set ? 'stored (leave empty to keep)' : 'no password set';
+    });
+    $('buy_sol').value = c.buy_sol; $('max_sol').value = c.max_sol;
+    $('slip').value = Math.round(c.slippage_bps / 100);
+    prioV = String(c.prio_microlamports); $('cu').value = c.cu_limit;
+    $('tp').value = c.tp_pct; $('sl').value = c.sl_pct;
+    
+    sortV = String(c.sort); $('bright').value = c.brightness; $('idle').value = c.idle_min;
+    $('rpc').value = c.rpc || '';
+    $('peep').value = '';
+    $('peep').placeholder = c.peep_set ? 'stored (leave empty to keep)' : 'paste your Peep key';
+    $('peepHint').textContent = c.peep_set ? 'A key is stored on the stick. Paste a new one to replace it.' : 'No key set: the stick cannot load tokens.';
+    $('miner_buy').value = c.miner_buy_sol; $('miner_to').value = c.miner_timeout_min;
+    mxV = String(c.miner_hold_x); mslV = String(c.miner_sl_pct); mivV = String(c.miner_interval_sec);
+    paintSeg('mxSeg', mxV); paintSeg('mslSeg', mslV); paintSeg('mivSeg', mivV);
+    armed = !!c.armed;
+    paintSeg('sortSeg', sortV); paintSeg('prioSeg', prioV); paintArmed(); paintRanges();
+    setDirty(false);
+  }
+
+  const num = id => { const v = parseFloat($(id).value); return isNaN(v) ? undefined : v; };
+  function collect() {
+    const wifi = [0, 1, 2].map(i => { const o = { ssid: $('ssid' + i).value.trim() }; const p = $('pass' + i).value; if (p) o.pass = p; return o; });
+    const cfg = {
+      wifi, rpc: $('rpc').value.trim() || undefined,
+      buy_sol: num('buy_sol'), max_sol: num('max_sol'),
+      slippage_bps: Math.round((num('slip') || 15) * 100),
+      prio_microlamports: parseInt(prioV, 10), cu_limit: num('cu'),
+      tp_pct: num('tp'), sl_pct: num('sl'),
+      sort: parseInt(sortV, 10), brightness: num('bright'), idle_min: num('idle'),
+      miner_buy_sol: num('miner_buy'), miner_timeout_min: num('miner_to'),
+      miner_hold_x: parseInt(mxV, 10), miner_sl_pct: parseInt(mslV, 10), miner_interval_sec: parseInt(mivV, 10),
+      armed,
+    };
+    const pk = $('peep').value.trim(); if (pk) cfg.peep_key = pk;
+    return cfg;
+  }
+
+  function setDirty(d) {
+    $('saveBar').classList.toggle('translate-y-full', !d);
+    $('saveBar').dataset.dirty = d ? '1' : '';
+  }
+  const markDirty = () => { paintRanges(); setDirty(true); };
+  $$('[data-field]').forEach(el => el.addEventListener('input', markDirty));
+  $$('#buyChips button').forEach(b => b.onclick = () => { $('buy_sol').value = b.dataset.v; markDirty(); });
+  $$('#sortSeg button').forEach(b => b.onclick = () => { sortV = b.dataset.v; paintSeg('sortSeg', sortV); markDirty(); });
+  $$('#prioSeg button').forEach(b => b.onclick = () => { prioV = b.dataset.v; paintSeg('prioSeg', prioV); markDirty(); });
+  $$('#mxSeg button').forEach(b => b.onclick = () => { mxV = b.dataset.v; paintSeg('mxSeg', mxV); markDirty(); });
+  $$('#mslSeg button').forEach(b => b.onclick = () => { mslV = b.dataset.v; paintSeg('mslSeg', mslV); markDirty(); });
+  $$('#mivSeg button').forEach(b => b.onclick = () => { mivV = b.dataset.v; paintSeg('mivSeg', mivV); markDirty(); });
+  $('armed').onclick = () => {
+    if (!armed && !confirm('Arm the stick?\n\nTrades will send REAL transactions with real funds.')) return;
+    armed = !armed; paintArmed(); setDirty(true);
+  };
+  const eye = (btn, inp) => { $(btn).onclick = () => { const i = $(inp); const s = i.type === 'password'; i.type = s ? 'text' : 'password'; $(btn).textContent = s ? 'hide' : 'show'; }; };
+  eye('eyePeep', 'peep');
+
+  $('btnSave').onclick = async () => {
+    $('btnSave').disabled = true;
+    try {
+      const r = await send('set_config', { config: collect() });
+      loaded = r.config; fill(r.config); updateDevice();
+      toast('Saved to stick', 'ok');
+    } catch (e) { toast('Save failed: ' + e.message, 'err'); }
+    finally { $('btnSave').disabled = false; }
+  };
+  $('btnDiscard').onclick = () => { if (loaded) fill(loaded); };
+
+  // ---------- device status ----------
+  let info = {}, stat = {};
+  function batteryPct(v) { return Math.max(0, Math.min(100, Math.round((v - 3.3) / (4.15 - 3.3) * 100))); }
+  function updateDevice() {
+    $('stFw').textContent = info.fw ? 'v' + info.fw : '-';
+    const wifiUp = stat.wifi ?? info.wifi;
+    $('stWifi').innerHTML = wifiUp
+      ? '<span class="text-emerald-300">Online</span>' + (stat.rssi ? ` <span class="text-xs text-slate-500">${stat.rssi} dBm</span>` : '')
+      : '<span class="text-slate-400">Offline</span>';
+    if (stat.battery_v) $('stBat').textContent = batteryPct(stat.battery_v) + '%  ' + stat.battery_v.toFixed(2) + ' V';
+    const isArmed = loaded ? loaded.armed : info.armed;
+    $('stMode').innerHTML = isArmed ? '<span class="text-rose-300">Armed (live)</span>' : '<span class="text-slate-300">Simulate only</span>';
+    $('stPub').textContent = pubkey || 'No wallet yet';
+    renderSetup();
+    $('stPos').textContent = stat.position_open ? 'Open: ' + (stat.position || 'token') : 'None';
+    if (stat.heap) $('stHeap').textContent = Math.round(stat.heap / 1024) + ' KB';
+  }
+  // Mirrors the checklist shown on the stick's main screen.
+  function renderSetup() {
+    if (!loaded) return;
+    const wifiOk = (loaded.wifi || []).some(w => w.ssid);
+    const items = [
+      { ok: wifiOk, req: true, text: 'Wi-Fi network and password', go: 'network', cta: 'Open Network' },
+      { ok: !!pubkey, req: true, text: 'Trading wallet', go: 'wallet', cta: 'Open Wallet' },
+      { ok: !!loaded.peep_set, req: true, text: 'Peep signals API key (token list)', go: 'network', cta: 'Open Network' },
+    ];
+    const missing = items.filter(i => !i.ok && i.req).length;
+    $('setupCard').classList.toggle('hidden', missing === 0);
+    $('setupList').innerHTML = items.map(i => `
+      <li class="flex items-center gap-2.5">
+        <span class="grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold ${i.ok ? 'bg-emerald-500/20 text-emerald-300' : (i.req ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-700 text-slate-400')}">${i.ok ? '&#10003;' : (i.req ? '!' : '-')}</span>
+        <span class="${i.ok ? 'text-slate-400' : 'text-slate-100'}">${i.text}</span>
+        ${i.ok ? '' : `<button data-go="${i.go}" class="ml-auto text-xs font-medium text-pump-400 hover:text-pump-500">${i.cta} &rarr;</button>`}
+      </li>`).join('');
+    $$('#setupList [data-go]').forEach(b => b.onclick = () => showTab(b.dataset.go));
+  }
+  function setPub(p) {
+    pubkey = p || '';
+    $('pub').textContent = pubkey || 'No wallet yet';
+    $('pub').dataset.v = pubkey;
+    $('btnCopy').disabled = !pubkey || !connected;
+    updateDevice();
+  }
+
+  async function loadAll() {
+    info = await send('hello');
+    const c = await send('get_config');
+    loaded = c.config; fill(c.config); setPub(c.pubkey);
+    try { stat = await send('status'); } catch (_) {}
+    updateDevice();
+    if (pubkey) refreshBal();
+  }
+  $('btnReload').onclick = () => loadAll().then(() => toast('Re-read from stick', 'ok')).catch(e => toast(e.message, 'err'));
+  $('btnReboot').onclick = () => send('reboot').then(() => { toast('Rebooting...'); setTimeout(cleanup, 300); }).catch(e => toast(e.message, 'err'));
+  $('btnWipe').onclick = async () => {
+    if (!confirm('Factory reset the stick?\nThis erases the wallet key, settings and open position.')) return;
+    toast('Press A on the stick to confirm');
+    try { await send('wipe', {}, 20000); toast('Wiped. Rebooting...', 'ok'); setTimeout(cleanup, 500); }
+    catch (e) { toast('Not wiped: ' + e.message, 'err'); }
+  };
+
+  let pollT = null;
+  function startPolling() {
+    stopPolling();
+    pollT = setInterval(async () => {
+      if (!connected || document.hidden || busy || tab !== 'device') return;
+      try { stat = await send('status', {}, 2500); updateDevice(); } catch (_) {}
+    }, 6000);
+  }
+  function stopPolling() { clearInterval(pollT); pollT = null; }
+
+  // ---------- wallet ----------
+  async function refreshBal() {
+    if (!pubkey) return;
+    const rpc = ($('rpc').value.trim() || 'https://api.mainnet-beta.solana.com');
+    $('bal').textContent = '...';
+    try {
+      const r = await fetch(rpc, { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [pubkey] }) });
+      const j = await r.json();
+      const sol = j.result.value / 1e9;
+      $('bal').textContent = sol.toFixed(4) + ' SOL';
+      $('stBal').textContent = sol.toFixed(4) + ' SOL';
+    } catch (e) { $('bal').textContent = 'n/a'; $('stBal').textContent = 'unavailable'; log('balance: ' + e.message); }
+  }
+  $('btnBal').onclick = refreshBal;
+  $('btnCopy').onclick = async () => { try { await navigator.clipboard.writeText(pubkey); toast('Address copied', 'ok'); } catch (_) { toast('Copy failed', 'err'); } };
+
+  $('btnGen').onclick = async () => {
+    if (!confirm('Generate a new wallet on the stick?' + (pubkey ? '\nThe current key will be REPLACED. Press A on the stick to confirm.' : ''))) return;
+    busy = true;
+    try { const r = await send('gen_wallet', {}, 30000); setPub(r.pubkey); toast('New wallet created', 'ok'); refreshBal(); }
+    catch (e) { toast('Generate failed: ' + e.message, 'err'); }
+    finally { busy = false; }
+  };
+
+  const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  function b58(bytes) {
+    let n = 0n; for (const b of bytes) n = (n << 8n) | BigInt(b);
+    let s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; }
+    for (const b of bytes) { if (b === 0) s = '1' + s; else break; }
+    return s;
+  }
+  $('btnImport').onclick = async () => {
+    let s = $('secret').value.trim(); if (!s) return;
+    if (!confirm('Import this key onto the stick?')) return;
+    try {
+      if (s[0] === '[') s = b58(Uint8Array.from(JSON.parse(s)));
+      const r = await send('set_wallet', { secret_b58: s });
+      $('secret').value = ''; setPub(r.pubkey); toast('Wallet imported', 'ok'); refreshBal();
+    } catch (e) { toast('Import failed: ' + e.message, 'err'); }
+  };
+
+  // ---------- boot ----------
+  window.addEventListener('beforeunload', e => { if ($('saveBar').dataset.dirty) { e.preventDefault(); e.returnValue = ''; } });
+  const h = (location.hash || '').slice(1);
+  setConn('off');
+  showTab(['install', ...DEVICE_TABS, 'help'].includes(h) ? h : 'install');
+})();
+</script>
+</body>
+</html>

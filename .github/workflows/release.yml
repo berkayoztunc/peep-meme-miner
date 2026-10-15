@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tools/check-web.sh
+      - name: Checksum
+        run: |
+          cd web/firmware
+          sha256sum peep-meme-miner-merged.bin > peep-meme-miner-merged.bin.sha256
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            web/firmware/peep-meme-miner-merged.bin
+            web/firmware/peep-meme-miner-merged.bin.sha256

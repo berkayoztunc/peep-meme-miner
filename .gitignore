@@ -1,0 +1,12 @@
+tools/.venv/
+firmware/.pio/
+.DS_Store
+node_modules/
+.wrangler/
+.env
+.env.*
+
+# internal notes / raw data, not for the public repo
+PLAN_V2.md
+M5Stick_PumpFun_AlSat_Plani.md
+peep-signals-full.json
