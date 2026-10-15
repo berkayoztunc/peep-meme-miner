@@ -1,6 +1,6 @@
 # Peep meme miner
 
-![CI](../../actions/workflows/ci.yml/badge.svg) ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+[![CI](https://github.com/berkayoztunc/peep-meme-miner/actions/workflows/ci.yml/badge.svg)](https://github.com/berkayoztunc/peep-meme-miner/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 
 > Not financial advice. Open-source hobby software, provided as is.
 
