@@ -24,7 +24,7 @@ mkdir -p "$ROOT/web/firmware"
   0xe000 "$BOOT_APP0" \
   0x10000 "$B/firmware.bin"
 
-VER="$(grep -o 'FW_VERSION "[^"]*"' "$ROOT/firmware/src/proto.cpp" | cut -d'"' -f2)"
+VER="$(grep -o 'FW_VERSION "[^"]*"' "$ROOT/firmware/src/proto.h" | cut -d'"' -f2)"
 cat > "$ROOT/web/manifest.json" <<JSON
 {
   "name": "Peep meme miner",

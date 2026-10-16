@@ -241,8 +241,9 @@ static void drawMiner() {
 }
 
 // ---- on-device miner settings ----
-static const int SET_N = 7;
-static const char* SET_LABEL[SET_N] = {"Buy SOL", "Hold sell", "Stop loss", "Timeout", "Check every", "Save", "Exit"};
+static const int SET_N = 8;
+static const int SET_ROWS = 6;   // editable rows; the rest are Save / Exit
+static const char* SET_LABEL[SET_N] = {"Buy SOL", "Hold sell", "Stop loss", "ATH down sell", "Timeout", "Check every", "Save", "Exit"};
 
 template <size_t N>
 static int cycleInt(int cur, const int (&vals)[N], int dir) {
@@ -252,7 +253,7 @@ static int cycleInt(int cur, const int (&vals)[N], int dir) {
 }
 
 static void settingsChange(int row, int dir) {
-  static const int HOLD[] = {2, 3, 4}, SL[] = {20, 30, 50}, TO[] = {2, 5, 10, 15, 20, 30, 60}, IV[] = {10, 30, 60};
+  static const int HOLD[] = {2, 3, 4}, SL[] = {20, 30, 50}, TR[] = {0, 10, 20, 30, 40, 50}, TO[] = {2, 5, 10, 15, 20, 30, 60}, IV[] = {10, 30, 60};
   switch (row) {
     case 0: {
       float hi = max(0.01f, cfg.maxSol), v = roundf((cfg.minerBuySol + dir * 0.01f) * 100) / 100;
@@ -261,8 +262,9 @@ static void settingsChange(int row, int dir) {
     }
     case 1: cfg.minerHoldX = cycleInt(cfg.minerHoldX, HOLD, dir); break;
     case 2: cfg.minerSlPct = cycleInt(cfg.minerSlPct, SL, dir); break;
-    case 3: cfg.minerTimeoutMin = cycleInt(cfg.minerTimeoutMin, TO, dir); break;
-    case 4: cfg.minerIntervalSec = cycleInt(cfg.minerIntervalSec, IV, dir); break;
+    case 3: cfg.minerTrailPct = cycleInt(cfg.minerTrailPct, TR, dir); break;
+    case 4: cfg.minerTimeoutMin = cycleInt(cfg.minerTimeoutMin, TO, dir); break;
+    case 5: cfg.minerIntervalSec = cycleInt(cfg.minerIntervalSec, IV, dir); break;
   }
 }
 
@@ -272,8 +274,9 @@ static void drawSettings() {
   vals[0] = String(cfg.minerBuySol, 2);
   vals[1] = String(cfg.minerHoldX) + "x";
   vals[2] = "-" + String(cfg.minerSlPct) + "%";
-  vals[3] = String(cfg.minerTimeoutMin) + " min";
-  vals[4] = String(cfg.minerIntervalSec) + " s";
+  vals[3] = cfg.minerTrailPct > 0 ? "-" + String(cfg.minerTrailPct) + "%" : String("off");
+  vals[4] = String(cfg.minerTimeoutMin) + " min";
+  vals[5] = String(cfg.minerIntervalSec) + " s";
   ui::settings(labs, vals, SET_N, setCur);
 }
 
@@ -294,8 +297,16 @@ static void updatePosition(bool force) {
   if (mode == MODE_MINER) {
     // exits: stop loss / hold-x target / timeout, first wins. Timeout sells even if the price is stale.
     int held = heldSec(), left = cfg.minerTimeoutMin * 60 - held;
-    ui::minerPosition(pos.sym, spent, val, pnl, held, left, cfg.minerHoldX, cfg.minerSlPct, stale);
-    bool hit = left <= 0 || (!stale && (pnl <= -cfg.minerSlPct || pnl >= (cfg.minerHoldX - 1) * 100.0));
+    // ATH down sell: track the highest price since buy, sell when price falls minerTrailPct below it
+    static bool peakDirty = false;
+    static tmr::Stamp peakSave;
+    if (!stale && lastPriceNative > pos.peakPrice) { pos.peakPrice = lastPriceNative; peakDirty = true; }
+    if (peakDirty && peakSave.due(tmr::PEAK_SAVE_MS)) { positionSave(); peakSave.mark(); peakDirty = false; }
+    double peakPnl = pos.peakPrice > 0 ? positionPnlPct(pos.peakPrice) : 0;
+    double drop = (pos.peakPrice > 0 && lastPriceNative > 0) ? (1.0 - lastPriceNative / pos.peakPrice) * 100.0 : 0;
+    bool trailHit = cfg.minerTrailPct > 0 && !stale && drop >= cfg.minerTrailPct;
+    ui::minerPosition(pos.sym, spent, val, pnl, held, left, cfg.minerHoldX, cfg.minerSlPct, cfg.minerTrailPct, peakPnl, drop, stale);
+    bool hit = left <= 0 || (!stale && (pnl <= -cfg.minerSlPct || pnl >= (cfg.minerHoldX - 1) * 100.0)) || trailHit;
     if (hit) { ui::beepOk(); doSell(); }
     return;
   }
@@ -327,7 +338,7 @@ void setup() {
   onProgress = progress;
   net::idleHook = []() { proto::poll(); };
   modeLoad();
-  ui::boot("Peep meme miner", "v1.1.0");
+  ui::boot("Peep meme miner", "v" FW_VERSION);
   // short window so the Settings page can reach us right after the USB reset
   for (uint32_t t0 = millis(); millis() - t0 < tmr::BOOT_WINDOW_MS;) { proto::poll(); delay(10); }
   lastActivity.mark();
@@ -394,11 +405,11 @@ void loop() {
 
     case S_SETTINGS:
       if (b) { setCur = (setCur + 1) % SET_N; drawSettings(); }
-      if (pw == 2 && setCur < 5) { settingsChange(setCur, -1); drawSettings(); }
+      if (pw == 2 && setCur < SET_ROWS) { settingsChange(setCur, -1); drawSettings(); }
       if (a) {
-        if (setCur < 5) { settingsChange(setCur, +1); drawSettings(); }
+        if (setCur < SET_ROWS) { settingsChange(setCur, +1); drawSettings(); }
         else {
-          if (setCur == 5) { configSave(); ui::beepOk(); } else configLoad();   // Exit discards edits
+          if (setCur == SET_ROWS) { configSave(); ui::beepOk(); } else configLoad();   // Exit discards edits
           showMenu();
         }
       }

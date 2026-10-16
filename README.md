@@ -33,7 +33,7 @@ Rebuild the firmware yourself: `tools/build-firmware.sh` (creates `tools/.venv` 
 | Menu item | What it does |
 |---|---|
 | Manual | Token list, buy/sell with buttons (as below). Hold A in the list: back to menu. |
-| Miner | Every N sec (10/30/60) fetch newest **radar** signal. New mint: beep, auto-buy (real SOL, ignores Armed), open PnL screen. Sells at stop loss (-20/-30/-50%), hold target (2x/3x/4x) or timeout (default 10 min), first wins. Same mint is never bought twice (remembered across reboots). First run only records the current newest as baseline. Hold Power: back to menu. |
+| Miner | Every N sec (10/30/60) fetch newest **radar** signal. New mint: beep, auto-buy (real SOL, ignores Armed), open PnL screen. Sells at stop loss (-20/-30/-50%), hold target (2x/3x/4x), **ATH down sell** (off or -10..-50% from the highest price since buy, default -20%) or timeout (default 10 min), first wins. Same mint is never bought twice (remembered across reboots). First run only records the current newest as baseline. Hold Power: back to menu. |
 | Settings | On-device miner settings: A = value up, Power = value down, B = next row, then Save or Exit. Same fields on the web Trading tab. |
 
 ## Buttons

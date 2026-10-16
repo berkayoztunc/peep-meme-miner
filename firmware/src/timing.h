@@ -13,6 +13,7 @@ constexpr uint32_t MINER_REDRAW_MS = 1000;     // miner screen clock tick
 constexpr uint32_t SHAKE_DEBOUNCE_MS = 1500;   // min gap between shake-triggered checks
 constexpr uint32_t BOOT_WINDOW_MS = 1500;      // serial window at boot for the settings page
 constexpr uint32_t IDLE_UNIT_MS = 60000;       // cfg.idleMin is in minutes
+constexpr uint32_t PEAK_SAVE_MS = 30000;      // persist a new position peak at most this often
 constexpr int MAX_SIG_AGE_SEC = 3600;          // newest signal older than this: wait for a new token
 constexpr float SHAKE_G = 2.2f;
 

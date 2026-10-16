@@ -340,6 +340,17 @@
             </div>
           </div>
           <div>
+            <div class="label">ATH down sell (sell when price falls this much from its peak since buy)</div>
+            <div class="seg" id="mtrSeg">
+              <button type="button" data-v="0">Off</button>
+              <button type="button" data-v="10">-10%</button>
+              <button type="button" data-v="20">-20%</button>
+              <button type="button" data-v="30">-30%</button>
+              <button type="button" data-v="40">-40%</button>
+              <button type="button" data-v="50">-50%</button>
+            </div>
+          </div>
+          <div>
             <div class="label">Check interval</div>
             <div class="seg" id="mivSeg">
               <button type="button" data-v="10">10 sec</button>
@@ -612,7 +623,7 @@
       </div>`);
   }
 
-  let armed = false, sortV = '0', prioV = '100000', mxV = '2', mslV = '50', mivV = '30';
+  let armed = false, sortV = '0', prioV = '100000', mxV = '2', mslV = '50', mtrV = '20', mivV = '30';
   function paintSeg(id, val) { $$('#' + id + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(val)))); }
   function paintArmed() {
     $('armed').setAttribute('aria-checked', String(armed));
@@ -644,8 +655,8 @@
     $('peep').placeholder = c.peep_set ? 'stored (leave empty to keep)' : 'paste your Peep key';
     $('peepHint').textContent = c.peep_set ? 'A key is stored on the stick. Paste a new one to replace it.' : 'No key set: the stick cannot load tokens.';
     $('miner_buy').value = c.miner_buy_sol; $('miner_to').value = c.miner_timeout_min;
-    mxV = String(c.miner_hold_x); mslV = String(c.miner_sl_pct); mivV = String(c.miner_interval_sec);
-    paintSeg('mxSeg', mxV); paintSeg('mslSeg', mslV); paintSeg('mivSeg', mivV);
+    mxV = String(c.miner_hold_x); mslV = String(c.miner_sl_pct); mtrV = String(c.miner_trail_pct ?? 20); mivV = String(c.miner_interval_sec);
+    paintSeg('mxSeg', mxV); paintSeg('mslSeg', mslV); paintSeg('mtrSeg', mtrV); paintSeg('mivSeg', mivV);
     armed = !!c.armed;
     paintSeg('sortSeg', sortV); paintSeg('prioSeg', prioV); paintArmed(); paintRanges();
     setDirty(false);
@@ -662,7 +673,7 @@
       tp_pct: num('tp'), sl_pct: num('sl'),
       sort: parseInt(sortV, 10), brightness: num('bright'), idle_min: num('idle'),
       miner_buy_sol: num('miner_buy'), miner_timeout_min: num('miner_to'),
-      miner_hold_x: parseInt(mxV, 10), miner_sl_pct: parseInt(mslV, 10), miner_interval_sec: parseInt(mivV, 10),
+      miner_hold_x: parseInt(mxV, 10), miner_sl_pct: parseInt(mslV, 10), miner_trail_pct: parseInt(mtrV, 10), miner_interval_sec: parseInt(mivV, 10),
       armed,
     };
     const pk = $('peep').value.trim(); if (pk) cfg.peep_key = pk;
@@ -680,6 +691,7 @@
   $$('#prioSeg button').forEach(b => b.onclick = () => { prioV = b.dataset.v; paintSeg('prioSeg', prioV); markDirty(); });
   $$('#mxSeg button').forEach(b => b.onclick = () => { mxV = b.dataset.v; paintSeg('mxSeg', mxV); markDirty(); });
   $$('#mslSeg button').forEach(b => b.onclick = () => { mslV = b.dataset.v; paintSeg('mslSeg', mslV); markDirty(); });
+  $$('#mtrSeg button').forEach(b => b.onclick = () => { mtrV = b.dataset.v; paintSeg('mtrSeg', mtrV); markDirty(); });
   $$('#mivSeg button').forEach(b => b.onclick = () => { mivV = b.dataset.v; paintSeg('mivSeg', mivV); markDirty(); });
   $('armed').onclick = () => {
     if (!armed && !confirm('Arm the stick?\n\nTrades will send REAL transactions with real funds.')) return;

@@ -29,6 +29,7 @@ void configLoad() {
   cfg.minerBuySol = p.getFloat("mBuy", cfg.minerBuySol);
   cfg.minerHoldX = p.getInt("mX", cfg.minerHoldX);
   cfg.minerSlPct = p.getInt("mSl", cfg.minerSlPct);
+  cfg.minerTrailPct = p.getInt("mTr", cfg.minerTrailPct);
   cfg.minerTimeoutMin = p.getInt("mTo", cfg.minerTimeoutMin);
   cfg.minerIntervalSec = p.getInt("mInt", cfg.minerIntervalSec);
   p.end();
@@ -60,6 +61,7 @@ void configSave() {
   p.putFloat("mBuy", cfg.minerBuySol);
   p.putInt("mX", cfg.minerHoldX);
   p.putInt("mSl", cfg.minerSlPct);
+  p.putInt("mTr", cfg.minerTrailPct);
   p.putInt("mTo", cfg.minerTimeoutMin);
   p.putInt("mInt", cfg.minerIntervalSec);
   p.end();
@@ -91,6 +93,7 @@ void configToJson(JsonObject o) {
   o["miner_buy_sol"] = cfg.minerBuySol;
   o["miner_hold_x"] = cfg.minerHoldX;
   o["miner_sl_pct"] = cfg.minerSlPct;
+  o["miner_trail_pct"] = cfg.minerTrailPct;
   o["miner_timeout_min"] = cfg.minerTimeoutMin;
   o["miner_interval_sec"] = cfg.minerIntervalSec;
 }
@@ -132,12 +135,14 @@ bool configFromJson(JsonObjectConst o) {
   SET_F("miner_buy_sol", minerBuySol);
   SET_I("miner_hold_x", minerHoldX);
   SET_I("miner_sl_pct", minerSlPct);
+  SET_I("miner_trail_pct", minerTrailPct);
   SET_I("miner_timeout_min", minerTimeoutMin);
   SET_I("miner_interval_sec", minerIntervalSec);
   // clamp
   cfg.minerBuySol = constrain(cfg.minerBuySol, 0.0005f, 100.0f);
   cfg.minerHoldX = constrain(cfg.minerHoldX, 2, 4);
   cfg.minerSlPct = constrain(cfg.minerSlPct, 5, 90);
+  cfg.minerTrailPct = constrain(cfg.minerTrailPct, 0, 90);
   cfg.minerTimeoutMin = constrain(cfg.minerTimeoutMin, 1, 60);
   cfg.minerIntervalSec = constrain(cfg.minerIntervalSec, 10, 60);
   cfg.slipBps = constrain(cfg.slipBps, 10, 5000);

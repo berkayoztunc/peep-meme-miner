@@ -10,7 +10,6 @@
 #include "ui.h"
 #include "wallet.h"
 
-#define FW_VERSION "1.1.0"
 
 void appTokens(JsonArray out);
 int appRefresh();   // runs the list refresh, returns count (<0 error)

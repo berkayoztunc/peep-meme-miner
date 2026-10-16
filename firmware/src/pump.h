@@ -9,6 +9,7 @@ struct Position {
   uint64_t tokens = 0;   // raw units
   int decimals = 6;
   uint32_t openedAt = 0;  // epoch seconds at buy (0 = clock unknown)
+  double peakPrice = 0;   // highest price (SOL/token) seen since buy; ATH down sell trails this
 };
 extern Position pos;
 

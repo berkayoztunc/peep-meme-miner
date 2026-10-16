@@ -31,5 +31,5 @@ void miner(int nextInSec, int intervalSec, int lastCheckAgoSec, const String& se
            const String& err);
 // Miner open position: PnL plus hold time, time left to timeout, exit targets.
 void minerPosition(const String& sym, double spentSol, double valueSol, double pnlPct, int heldSec, int leftSec,
-                   int holdX, int slPct, bool stale);
+                   int holdX, int slPct, int trailPct, double peakPct, double dropPct, bool stale);
 }

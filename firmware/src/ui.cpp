@@ -356,7 +356,7 @@ void miner(int nextIn, int interval, int lastCheckAgo, const String& seenSym, in
 }
 
 void minerPosition(const String& sym, double spent, double value, double p, int held, int left, int holdX,
-                   int sl, bool stale) {
+                   int sl, int trail, double peakPct, double dropPct, bool stale) {
   spr.fillSprite(UI_BG);
   header(sym + " MINER", p >= 0 ? TFT_GREEN : TFT_RED);
   logo();
@@ -367,8 +367,10 @@ void minerPosition(const String& sym, double spent, double value, double p, int 
   T(s, 8, 44, s.length() > 7 ? 4 : 6);
   spr.setTextColor(TFT_WHITE, UI_BG);
   T("held " + fmtDur(held) + "  left " + fmtDur(max(0, left)), 8, 92, 2);
-  spr.setTextColor(UI_GREY, UI_BG);
-  T(String(stale ? "price stale  " : "") + "sell " + String(holdX) + "x / -" + String(sl) + "% / time", 8, 112, 1);
+  spr.setTextColor(UI_CYAN, UI_BG);
+  T(String(stale ? "stale " : "") + "pk " + pct(peakPct) + " dn " + String(max(0.0, dropPct), 0) + "/" +
+        (trail > 0 ? String(trail) : String("off")) + "% " + String(holdX) + "x -" + String(sl) + "%",
+    8, 110, 1);
   footer("A: SELL now");
   push();
 }

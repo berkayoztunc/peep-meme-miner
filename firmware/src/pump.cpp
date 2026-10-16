@@ -39,6 +39,7 @@ void positionLoad() {
   pos.tokens = p.getULong64("tokens", 0);
   pos.decimals = p.getInt("dec", 6);
   pos.openedAt = p.getUInt("at", 0);
+  pos.peakPrice = p.getDouble("peak", 0);
   p.end();
   if (pos.mint.length() < 32) pos.open = false;
 }
@@ -55,6 +56,7 @@ void positionSave() {
   p.putULong64("tokens", pos.tokens);
   p.putInt("dec", pos.decimals);
   p.putUInt("at", pos.openedAt);
+  p.putDouble("peak", pos.peakPrice);
   p.end();
 }
 
