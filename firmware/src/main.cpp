@@ -22,7 +22,7 @@ enum Mode { MODE_MANUAL = 0, MODE_MINER = 1 };
 static Mode mode = MODE_MANUAL;       // persisted in NVS "pump"/"mode"
 static int menuCur = 0;
 static int setCur = 0;
-static const int HIST_N = 5;          // last N handled mints (persisted): never rebuy, stops A/B/C rotation
+static const int HIST_N = 20;         // last N handled mints (persisted): never rebuy, stops A/B/C rotation
 static String hist[HIST_N];               // hist[0] newest
 static bool inHist(const String& m) { for (int i = 0; i < HIST_N; i++) if (hist[i] == m) return true; return false; }
 static bool histEmpty() { for (int i = 0; i < HIST_N; i++) if (hist[i].length()) return false; return true; }
@@ -201,31 +201,29 @@ static void minerCheck() {
   minerErr = "";
   if (!net::wifiUp()) net::wifiConnect();
   ui::busy("MINER", "checking radar...");
-  int saved = cfg.sort;
-  cfg.sort = 0;                       // radar only, not saved
-  market::sortBySignal = true;        // newest radar signal first, not newest token
+  market::minerMode = true;           // all signal types, scored + filtered, best candidate first
   int n = market::trending(toks, MAXTOK);
-  market::sortBySignal = false;
-  cfg.sort = saved;
+  market::minerMode = false;
   ntok = n < 0 ? 0 : n;
   sel = 0;
   if (n == -2) { minerErr = "Add Peep key"; return; }
   if (n == -3) { minerErr = "Peep key rejected"; return; }
   if (n < 0) { minerErr = "API: " + net::lastError; return; }
-  if (n == 0) { if (market::signalsDegraded) minerErr = "Peep API degraded"; return; }
-  Token t = toks[0];                  // newest radar signal first
-  seenSym = t.sym;                    // shown on the miner screen even when not bought
-  seenSigAge = t.sigAgeSec;
-  seenAt.mark();
-  if (inHist(t.mint)) return;         // nothing new (one of the last 5 handled)
-  bool baseline = histEmpty();        // first ever run: remember, don't buy stale signal
-  if (!baseline && t.sigAgeSec > tmr::MAX_SIG_AGE_SEC) {   // newest signal over 1h old: wait for a new token
-    minerErr = "newest signal " + String(t.sigAgeSec / 60) + "m old, waiting";
-    return;
+  if (n == 0) { minerErr = market::signalsDegraded ? "Peep API degraded" : "no strong signal"; return; }
+  bool baseline = histEmpty();        // first ever run: remember what exists, don't buy a stale signal
+  int pick = -1;
+  for (int i = 0; i < n; i++) {       // best-scored token we have not handled yet
+    if (baseline) { histPush(toks[i].mint); continue; }
+    if (!inHist(toks[i].mint)) { pick = i; break; }
   }
+  seenSym = toks[0].sym;              // shown on the miner screen even when not bought
+  seenSigAge = toks[0].sigAgeSec;
+  seenAt.mark();
+  if (baseline) { modeSave(); return; }
+  if (pick < 0) return;               // nothing new (all candidates already handled)
+  Token t = toks[pick];
   histPush(t.mint);
   modeSave();                         // saved before buying: a failed buy is never retried in a loop
-  if (baseline) return;
   ui::beepOk();
   minerBuy(t);
 }
@@ -416,6 +414,7 @@ void loop() {
       break;
 
     case S_MINER:
+      if (!minerStart.set()) minerStart.mark();             // resumed after boot/menu: "run" counts from now
       if (pw == 1) { showMenu(); pw = 0; break; }           // hold power: back to menu
       {
         // shake = manual refresh: check now and restart the interval timer

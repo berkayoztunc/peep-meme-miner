@@ -1,13 +1,15 @@
 #include "market.h"
 #include "config.h"
 #include "net.h"
+#include "timing.h"
+#include <math.h>
 #include <ArduinoJson.h>
 #include <algorithm>
 
 namespace market {
 
 bool signalsDegraded = false;
-bool sortBySignal = false;
+bool minerMode = false;
 
 // ---------------- Peep partner signals ----------------
 static String ageStr(long s) {
@@ -58,8 +60,14 @@ static int peepSignals(Token* out, int n) {
     if (gen && created && gen >= created) w.t.ageSec = (int)((gen - created) / 1000);
     // Signal type filter by mode: 0 radar, 1 thesis, 2 call, 3 any. Ordered by the matched signal time.
     static const char* WANT[] = {"radar", "thesis", "call", ""};
-    const char* want = WANT[constrain(cfg.sort, 0, 3)];
+    const char* want = minerMode ? "" : WANT[constrain(cfg.sort, 0, 3)];
     w.last = 0;
+    if (minerMode) {
+      if (w.t.mcap < tmr::MIN_MCAP_USD || w.t.mcap > tmr::MAX_MCAP_USD) continue;
+      if (w.t.ageSec > tmr::MAX_TOKEN_AGE_SEC) continue;
+    }
+    bool hasRadar = false, hasThesis = false, hasCall = false;
+    float score = 0;
     std::vector<std::pair<uint64_t, String>> s;
     for (JsonObjectConst x : t["sources"].as<JsonArrayConst>()) {
       uint64_t at = x["atMs"] | (uint64_t)0;
@@ -67,8 +75,17 @@ static int peepSignals(Token* out, int n) {
       bool match = want[0] == 0 || name == want;
       if (match && at > w.last) w.last = at;
       s.push_back({at, name});
+      float wt = name == "radar" ? tmr::W_RADAR : name == "thesis" ? tmr::W_THESIS : name == "call" ? tmr::W_CALL : 0;
+      if (wt > 0 && gen >= at) {
+        score += wt * powf(0.5f, (float)((gen - at) / 1000) / tmr::SCORE_HALFLIFE_SEC);
+        (name == "radar" ? hasRadar : name == "thesis" ? hasThesis : hasCall) = true;
+      }
     }
     if (w.last == 0) continue;                       // token has no signal of the wanted type
+    int kinds = hasRadar + hasThesis + hasCall;
+    for (int k = 1; k < kinds; k++) score *= tmr::SCORE_MULTI;
+    w.t.score = score;
+    if (minerMode && score < tmr::MIN_SCORE) continue;
     std::sort(s.begin(), s.end(), [want](const std::pair<uint64_t, String>& a, const std::pair<uint64_t, String>& b) {
       bool am = want[0] && a.second == want, bm = want[0] && b.second == want;
       if (am != bm) return am;
@@ -83,9 +100,9 @@ static int peepSignals(Token* out, int n) {
     rows.push_back(w);
   }
   // newest token first (createdAtMs desc); tokens without a creation time go last, then by signal time
-  const bool bySig = sortBySignal;
-  std::sort(rows.begin(), rows.end(), [bySig](const Row& a, const Row& b) {
-    if (bySig && a.last != b.last) return a.last > b.last;
+  const bool byScore = minerMode;
+  std::sort(rows.begin(), rows.end(), [byScore](const Row& a, const Row& b) {
+    if (byScore && a.t.score != b.t.score) return a.t.score > b.t.score;
     if (a.created != b.created) return a.created > b.created;
     return a.last > b.last;
   });

@@ -14,7 +14,15 @@ constexpr uint32_t SHAKE_DEBOUNCE_MS = 1500;   // min gap between shake-triggere
 constexpr uint32_t BOOT_WINDOW_MS = 1500;      // serial window at boot for the settings page
 constexpr uint32_t IDLE_UNIT_MS = 60000;       // cfg.idleMin is in minutes
 constexpr uint32_t PEAK_SAVE_MS = 30000;      // persist a new position peak at most this often
-constexpr int MAX_SIG_AGE_SEC = 3600;          // newest signal older than this: wait for a new token
+// Miner candidate scoring (market.cpp). score = sum over signals of weight * 0.5^(age / half-life),
+// times SCORE_MULTI for every extra distinct signal type (radar+thesis+call confirm each other).
+constexpr float W_RADAR = 3.0f, W_THESIS = 2.0f, W_CALL = 1.0f;
+constexpr float SCORE_HALFLIFE_SEC = 900.0f;   // a signal loses half its weight every 15 min
+constexpr float SCORE_MULTI = 1.5f;
+constexpr float MIN_SCORE = 0.6f;              // below this the signal is too weak / too old to buy
+constexpr int MAX_TOKEN_AGE_SEC = 5400;        // ignore tokens launched more than 90 min ago
+constexpr float MIN_MCAP_USD = 4500;           // ~launch floor: no traction yet
+constexpr float MAX_MCAP_USD = 80000;          // too late, upside gone
 constexpr float SHAKE_G = 2.2f;
 
 // Timestamp helper: unset until mark() is called, so "never happened" is explicit (not millis()==0).

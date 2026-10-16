@@ -44,7 +44,7 @@ int json(const String& url, JsonDocument& out, const JsonDocument* filter, const
          const String* body, const char* hdrName, const char* hdrVal,
          const char* hdr2Name, const char* hdr2Val) {
   int code = jsonOnce(url, out, filter, method, body, hdrName, hdrVal, hdr2Name, hdr2Val);
-  for (int attempt = 0; attempt < 2 && code < 0 && code != -100 && code != -102; attempt++) {
+  for (int attempt = 0; attempt < 2 && (code < 0 || code == 429 || code >= 500) && code != -100 && code != -102; attempt++) {
     delay(350 + 250 * attempt);   // transient connect/TLS failure: let sockets and heap settle, try again
     out.clear();
     code = jsonOnce(url, out, filter, method, body, hdrName, hdrVal, hdr2Name, hdr2Val);
@@ -85,7 +85,8 @@ static int jsonOnce(const String& url, JsonDocument& out, const JsonDocument* fi
       ? deserializeJson(out, http.getStream(), DeserializationOption::Filter(*filter))
       : deserializeJson(out, http.getStream());
   http.end();
-  if (e) { lastError = String("json ") + e.c_str(); if (code == 200) return -102; }
+  if (code != 200) { lastError = String("http ") + code; return code; }
+  if (e) { lastError = String("json ") + e.c_str(); return -102; }
   return code;
 }
 int bytes(const String& url, uint8_t* buf, size_t cap, size_t& len) {
